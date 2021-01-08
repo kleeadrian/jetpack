@@ -8,6 +8,7 @@ import { expect } from 'chai';
 /**
  * Internal dependencies
  */
+import { DevPackagesNotice } from '../index';
 import { PlanConflictWarning } from '../plan-conflict-warning';
 
 describe( 'PlanConflictWarning', () => {
@@ -85,5 +86,21 @@ describe( 'PlanConflictWarning', () => {
 			'Looks like you also purchased the Jetpack Backup (Real-time) product. ' +
 			'Consider removing Jetpack Backup (Real-time).'
 		);
+	} );
+} );
+
+describe( 'DevPackagesNotice', () => {
+	it( 'should not render when showDevPackagesNotice is false', () => {
+		const wrapper = shallow( <DevPackagesNotice showDevPackagesNotice={ false } /> );
+		expect( wrapper.isEmptyRender() ).to.equal( true );
+	} );
+
+	it( 'should render the DevPackagesNotice when showDevPackagesNotice is true', () => {
+		const wrapper = shallow( <DevPackagesNotice showDevPackagesNotice={ true } /> );
+		expect( wrapper.prop( 'text' ) ).to.equal(
+			"You should set the JETPACK_AUTOLOAD_DEV constant to true to ensure that Jetpack's development packages are used."
+		);
+		expect( wrapper.find( 'SimpleNotice' ).length ).to.equal(1);
+		expect( wrapper.find( 'NoticeAction' ).length ).to.equal(1);
 	} );
 } );
