@@ -135,6 +135,14 @@ export function userCanConnectSite( state ) {
 	return get( state.jetpack.initialState.userData.currentUser.permissions, 'connect', false );
 }
 
+/**
+ * Returns true if current user is connection owner.
+ *
+ * @param  {Object} state Global state tree
+ * @return {bool} true if the current user is connection owner, false otherwise
+ *
+ * @deprecated 9.3.0
+ */
 export function userIsMaster( state ) {
 	return get( state.jetpack.initialState.userData.currentUser, 'isMaster', false );
 }
@@ -264,6 +272,17 @@ export function currentThemeSupports( state, feature ) {
  */
 export function showBackups( state ) {
 	return get( state.jetpack.initialState.siteData, 'showBackups', true );
+}
+
+/**
+ * Determines if the Jetpack Recommendations should be displayed
+ *
+ * @param {object} state - Global state tree
+ *
+ * @returns {boolean} True if the Jetpack Recommendations should be displayed, false otherwise.
+ */
+export function showRecommendations( state ) {
+	return get( state.jetpack.initialState.siteData, 'showRecommendations', false );
 }
 
 /**
@@ -407,6 +426,17 @@ function getProductOptions( state, product, siteProducts ) {
  */
 export function getInitialSetupWizardStatus( state ) {
 	return get( state.jetpack.initialState, 'setupWizardStatus', '' );
+}
+
+/**
+ * The current step of the Recommendations.
+ *
+ * @param {*} state - Global state tree.
+ *
+ * @returns {string} The current Recommendations step.
+ */
+export function getInitialRecommendationsStep( state ) {
+	return get( state.jetpack.initialState, 'recommendationsStep', '' );
 }
 
 /**

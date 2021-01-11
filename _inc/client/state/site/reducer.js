@@ -273,10 +273,6 @@ export function getActiveFeatures( state ) {
 	return get( state.jetpack.siteData, [ 'data', 'site', 'features', 'active' ], [] );
 }
 
-export function getAvailablePlans( state ) {
-	return get( state.jetpack.siteData, [ 'data', 'sitePlans' ] );
-}
-
 export function getSitePurchases( state ) {
 	return get( state.jetpack.siteData, [ 'data', 'sitePurchases' ], [] );
 }
@@ -294,6 +290,16 @@ export function getActiveProductPurchases( state ) {
 	return getActiveSitePurchases( state ).filter( purchase =>
 		isJetpackProduct( purchase.product_slug )
 	);
+}
+
+/**
+ * Determines if the site has an active product purchase
+ *
+ * @param {*} state - Global state tree
+ * @returns {boolean} True if the site has an active product purchase, false otherwise.
+ */
+export function hasActiveProductPurchase( state ) {
+	return getActiveProductPurchases( state ).length > 0;
 }
 
 export function getActiveBackupPurchase( state ) {

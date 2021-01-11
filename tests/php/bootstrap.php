@@ -43,7 +43,40 @@ if( false !== getenv( 'WP_DEVELOP_DIR' ) ) {
 	$test_root = '/tmp/wordpress-tests-lib';
 }
 
+if ( ! isset( $test_root ) || ! file_exists( $test_root . '/includes/bootstrap.php' ) ) {
+	echo 'Failed to automatically locate WordPress or wordpress-develop to run tests.' . PHP_EOL;
+	echo PHP_EOL;
+	echo 'Set the WP_DEVELOP_DIR environment variable to point to a copy of WordPress' . PHP_EOL;
+	echo 'or wordpress-develop.' . PHP_EOL;
+	exit( 1 );
+}
+
 echo "Using test root $test_root\n";
+
+// WordPress requires PHPUnit 7.5 or earlier and hacks around a few things to
+// make it work with PHP 8. Unfortunately for MockObjects they do it via
+// composer.json rather than bootstrap.php, so we have to manually do it here.
+if ( version_compare( PHP_VERSION, '8.0', '>=' ) &&
+	( ! class_exists( PHPUnit\Runner\Version::class ) || version_compare( PHPUnit\Runner\Version::id(), '9.3', '<' ) )
+) {
+	if ( ! class_exists( PHPUnit\Framework\MockObject\InvocationMocker::class, false ) &&
+		file_exists( "$test_root/includes/phpunit7/MockObject/InvocationMocker.php" )
+	) {
+		require "$test_root/includes/phpunit7/MockObject/Builder/NamespaceMatch.php";
+		require "$test_root/includes/phpunit7/MockObject/Builder/ParametersMatch.php";
+		require "$test_root/includes/phpunit7/MockObject/InvocationMocker.php";
+		require "$test_root/includes/phpunit7/MockObject/MockMethod.php";
+	} else {
+		fprintf(
+			STDOUT,
+			"Warning: PHPUnit <9.3 is not compatible with PHP 8.0+, and the hack could not be loaded.\n  Class %s exists: %s\n  File %s exists: %s\n",
+			PHPUnit\Framework\MockObject\InvocationMocker::class,
+			class_exists( PHPUnit\Framework\MockObject\InvocationMocker::class, false ) ? 'yes (bad)' : 'no (good)',
+			"$test_root/includes/phpunit7/MockObject/InvocationMocker.php",
+			file_exists( "$test_root/includes/phpunit7/MockObject/InvocationMocker.php" ) ? 'yes (good)' : 'no (bad)'
+		);
+	}
+}
 
 if ( '1' != getenv( 'WP_MULTISITE' ) &&
  ( defined( 'WP_TESTS_MULTISITE') && ! WP_TESTS_MULTISITE ) ) {
@@ -79,7 +112,6 @@ function _manually_load_plugin() {
 }
 
 function _manually_install_woocommerce() {
-	global $wp_version;
 	// clean existing install first
 	define( 'WP_UNINSTALL_PLUGIN', true );
 	define( 'WC_REMOVE_ALL_DATA', true );
@@ -88,11 +120,7 @@ function _manually_install_woocommerce() {
 	WC_Install::install();
 
 	// reload capabilities after install, see https://core.trac.wordpress.org/ticket/28374
-	if ( version_compare( $wp_version, '4.7.0' ) >= 0 ) {
-		$GLOBALS['wp_roles'] = new WP_Roles();
-	} else {
-		$GLOBALS['wp_roles']->reinit();
-	}
+	$GLOBALS['wp_roles'] = new WP_Roles(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 
 	echo "Installing WooCommerce..." . PHP_EOL;
 }
@@ -123,7 +151,7 @@ function jetpack_full_sync_immediately_off( $modules ) {
 	return $modules;
 }
 
-if ( false !== getenv( 'LEGACY_FULL_SYNC' ) ) {
+if ( '1' === getenv( 'LEGACY_FULL_SYNC' ) ) {
 	tests_add_filter( 'jetpack_sync_modules', 'jetpack_full_sync_immediately_off' );
 }
 

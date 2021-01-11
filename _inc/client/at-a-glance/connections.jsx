@@ -4,7 +4,11 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { jetpackCreateInterpolateElement } from 'components/create-interpolate-element';
+
+/**
+ * WordPress dependencies
+ */
+import { createInterpolateElement } from '@wordpress/element';
 import { __, sprintf, _x } from '@wordpress/i18n';
 
 /**
@@ -12,6 +16,7 @@ import { __, sprintf, _x } from '@wordpress/i18n';
  */
 import {
 	getSiteConnectionStatus,
+	isConnectionOwner,
 	isCurrentUserLinked,
 	isOfflineMode,
 	isFetchingUserData as _isFetchingUserData,
@@ -19,7 +24,6 @@ import {
 } from 'state/connection';
 import {
 	userCanDisconnectSite,
-	userIsMaster,
 	getUserGravatar,
 	getUsername,
 	getSiteIcon,
@@ -79,7 +83,7 @@ export class DashConnections extends Component {
 						) }
 						<div className="jp-connection-settings__text">
 							{ __( 'Your site is connected to WordPress.com.', 'jetpack' ) }
-							{ this.props.userIsMaster && (
+							{ this.props.isConnectionOwner && (
 								<span className="jp-connection-settings__is-owner">
 									<br />
 									<em>{ __( 'You are the Jetpack owner.', 'jetpack' ) }</em>
@@ -106,7 +110,7 @@ export class DashConnections extends Component {
 	 * @returns {string}
 	 */
 	userConnection() {
-		const maybeShowLinkUnlinkBtn = this.props.userIsMaster ? null : (
+		const maybeShowLinkUnlinkBtn = this.props.isConnectionOwner ? null : (
 			<ConnectButton asLink connectUser={ true } from="connection-settings" />
 		);
 
@@ -163,7 +167,7 @@ export class DashConnections extends Component {
 							src={ this.props.wpComConnectedUser.avatar }
 						/>
 						<div className="jp-connection-settings__text">
-							{ jetpackCreateInterpolateElement(
+							{ createInterpolateElement(
 								sprintf(
 									/* translators: Placeholder is the WordPress user login name. */
 									__( 'Connected as <span>%s</span>', 'jetpack' ),
@@ -222,7 +226,7 @@ DashConnections.propTypes = {
 	siteConnectionStatus: PropTypes.any.isRequired,
 	isOfflineMode: PropTypes.bool.isRequired,
 	userCanDisconnectSite: PropTypes.bool.isRequired,
-	userIsMaster: PropTypes.bool.isRequired,
+	isConnectionOwner: PropTypes.bool.isRequired,
 	isLinked: PropTypes.bool.isRequired,
 	userGravatar: PropTypes.any.isRequired,
 	username: PropTypes.any.isRequired,
@@ -233,9 +237,9 @@ export default connect( state => {
 		siteConnectionStatus: getSiteConnectionStatus( state ),
 		isOfflineMode: isOfflineMode( state ),
 		userCanDisconnectSite: userCanDisconnectSite( state ),
-		userIsMaster: userIsMaster( state ),
 		userGravatar: getUserGravatar( state ),
 		username: getUsername( state ),
+		isConnectionOwner: isConnectionOwner( state ),
 		isLinked: isCurrentUserLinked( state ),
 		siteIcon: getSiteIcon( state ),
 		isFetchingUserData: _isFetchingUserData( state ),

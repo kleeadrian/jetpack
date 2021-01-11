@@ -5,12 +5,13 @@
 		</testsuite>
 	</testsuites>
 	<filter>
-		<whitelist processUncoveredFilesFromWhitelist="false">
+		<whitelist>
 			<directory suffix=".php">.</directory>
 			<exclude>
 				<directory suffix=".php">tests</directory>
 				<directory suffix=".php">vendor</directory>
 				<directory suffix=".php">views</directory>
+				<directory suffix=".php">wordpress</directory>
 			</exclude>
 		</whitelist>
 	</filter>

@@ -406,6 +406,9 @@ class WP_Test_Jetpack_Sync_Sender extends WP_Test_Jetpack_Sync_Base {
 
 		$event = $this->server_event_storage->get_most_recent_event( 'wp_insert_post' );
 
+		// Clean up.
+		unregister_post_type( 'http_listener' );
+
 		$this->assertFalse( $event );
 	}
 
@@ -554,6 +557,19 @@ class WP_Test_Jetpack_Sync_Sender extends WP_Test_Jetpack_Sync_Base {
 
 		$this->factory->post->create();
 		$response = $this->sender->do_sync();
+		\Automattic\Jetpack\Constants::clear_single_constant( 'JETPACK_SYNC_READ_ONLY' );
+
+		$this->assertTrue( is_wp_error( $response ) );
+	}
+
+	/**
+	 * Validate that WP_Error is returned in do_full_sync if JETPACK_SYNC_READ_ONLY is defined and true.
+	 */
+	public function test_do_full_sync_errors_if_read_only() {
+		\Automattic\Jetpack\Constants::set_constant( 'JETPACK_SYNC_READ_ONLY', true );
+
+		$this->factory->post->create();
+		$response = $this->sender->do_full_sync();
 		\Automattic\Jetpack\Constants::clear_single_constant( 'JETPACK_SYNC_READ_ONLY' );
 
 		$this->assertTrue( is_wp_error( $response ) );

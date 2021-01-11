@@ -34,10 +34,60 @@ class Dummy_Sync_Test_WP_Upgrader {
 class WP_Test_Jetpack_Sync_Themes extends WP_Test_Jetpack_Sync_Base {
 	protected $theme;
 
+	/**
+	 * Dummy Themes.
+	 *
+	 * @var string[]
+	 */
+	protected static $themes = array(
+		'theme-file-sync-parent',
+		'theme-file-sync-child',
+	);
+
+	/**
+	 * Move Dummy Themes to proper location for testing.
+	 */
+	public static function setUpBeforeClass() {
+		parent::setUpBeforeClass();
+
+		// Copy themes from tests/php/files/ to wp-content/themes.
+		foreach ( static::$themes as $theme ) {
+			$source_dir = __DIR__ . '/../files/' . $theme;
+			$dest_dir   = WP_CONTENT_DIR . '/themes/' . $theme;
+
+			mkdir( $dest_dir );
+
+			foreach ( glob( $source_dir . '/*.*' ) as $theme_file ) {
+				copy( $theme_file, $dest_dir . '/' . basename( $theme_file ) );
+			}
+		}
+
+	}
+
+	/**
+	 * Remove Dummy Themes.
+	 */
+	public static function tearDownAfterClass() {
+		parent::tearDownAfterClass();
+
+		// Remove themes previously copied from tests/php/files/ to wp-content/themes.
+		foreach ( static::$themes as $theme ) {
+			$dest_dir = WP_CONTENT_DIR . '/themes/' . $theme;
+
+			foreach ( glob( $dest_dir . '/*.*' ) as $theme_file ) {
+				unlink( $theme_file );
+			}
+
+			rmdir( $dest_dir );
+		}
+
+	}
+
 	public function setUp() {
 		parent::setUp();
-		$themes      = array( 'twentyten', 'twentyeleven', 'twentytwelve', 'twentythirteen', 'twentyfourteen' );
-		$this->theme = $themes[ rand( 0, 4 ) ];
+
+		$current_theme = wp_get_theme();
+		$this->theme   = $current_theme->slug;
 
 		switch_theme( $this->theme );
 
@@ -85,6 +135,7 @@ class WP_Test_Jetpack_Sync_Themes extends WP_Test_Jetpack_Sync_Base {
 	 * Test that we support syncing all the different theme features still.
 	 */
 	public function test_theme_callable_syncs_theme_supports_data() {
+
 		$this->sender->do_sync();
 		$theme_supports = $this->server_replica_storage->get_callable( 'theme_support' );
 
@@ -94,11 +145,6 @@ class WP_Test_Jetpack_Sync_Themes extends WP_Test_Jetpack_Sync_Base {
 				isset( $theme_supports[ $theme_feature ] ),
 				'Default Feature(s) not synced ' . $theme_feature
 			);
-		}
-
-		if ( ! function_exists( 'get_registered_theme_features' ) ) {
-			// get_registered_theme_features got intorduced in WP 5.5 so any tests that use the previous version of WP fail.
-			return;
 		}
 
 		// Sync all registered theme features.
@@ -118,12 +164,12 @@ class WP_Test_Jetpack_Sync_Themes extends WP_Test_Jetpack_Sync_Base {
 
 		$test_themes = array(
 			array(
-				'twentyten',
-				'Twenty Ten',
+				'theme-file-sync-parent',
+				'Parent Sync Theme',
 			),
 			array(
-				'twentytwelve',
-				'Twenty Twelve',
+				'theme-file-sync-child',
+				'Child Sync Theme',
 			)
 		);
 
@@ -247,13 +293,11 @@ class WP_Test_Jetpack_Sync_Themes extends WP_Test_Jetpack_Sync_Base {
 	}
 
 	public function test_update_themes_sync() {
+
 		$dummy_details = array(
-			'type' => 'theme',
+			'type'   => 'theme',
 			'action' => 'update',
-			'themes' => array(
-				'twentyseventeen',
-				'twentysixteen',
-			)
+			'themes' => self::$themes,
 		);
 
 		/** This action is documented in /wp-admin/includes/class-wp-upgrader.php */
@@ -262,22 +306,25 @@ class WP_Test_Jetpack_Sync_Themes extends WP_Test_Jetpack_Sync_Base {
 		$this->sender->do_sync();
 
 		$event_data = $this->server_event_storage->get_most_recent_event( 'jetpack_updated_themes' );
-		$themes = $event_data->args[0];
+		$themes     = $event_data->args[0];
 
-		//Not testing versions since they are subject to change
-		$this->assertEquals( 'Twenty Seventeen', $themes['twentyseventeen']['name'] );
-		$this->assertEquals( 'https://wordpress.org/themes/twentyseventeen/', $themes['twentyseventeen']['uri'] );
-		$this->assertEquals( 'twentyseventeen', $themes['twentyseventeen']['stylesheet'] );
-		$this->assertEquals( 'Twenty Sixteen', $themes['twentysixteen']['name'] );
-		$this->assertEquals( 'https://wordpress.org/themes/twentysixteen/', $themes['twentysixteen']['uri'] );
-		$this->assertEquals( 'twentysixteen', $themes['twentysixteen']['stylesheet'] );
+		$this->assertSame( 'Parent Sync Theme', $themes['theme-file-sync-parent']['name'] );
+		$this->assertSame( 'https://jetpack.com/themes/sync-parent/', $themes['theme-file-sync-parent']['uri'] );
+		$this->assertSame( 'theme-file-sync-parent', $themes['theme-file-sync-parent']['stylesheet'] );
+		$this->assertSame( '2.0', $themes['theme-file-sync-parent']['version'] );
+		$this->assertSame( 'Child Sync Theme', $themes['theme-file-sync-child']['name'] );
+		$this->assertSame( 'https://jetpack.com/themes/sync-child/', $themes['theme-file-sync-child']['uri'] );
+		$this->assertSame( 'theme-file-sync-child', $themes['theme-file-sync-child']['stylesheet'] );
+		$this->assertSame( '1.0', $themes['theme-file-sync-child']['version'] );
 	}
 
 	public function test_update_theme_sync() {
+		$theme = 'theme-file-sync-child';
+
 		$dummy_details = array(
-			'type' => 'theme',
+			'type'   => 'theme',
 			'action' => 'update',
-			'theme' => 'twentyseventeen'
+			'theme'  => $theme,
 		);
 
 		/** This action is documented in /wp-admin/includes/class-wp-upgrader.php */
@@ -286,17 +333,16 @@ class WP_Test_Jetpack_Sync_Themes extends WP_Test_Jetpack_Sync_Base {
 		$this->sender->do_sync();
 
 		$event_data = $this->server_event_storage->get_most_recent_event( 'jetpack_updated_themes' );
-		$themes = $event_data->args[0];
+		$themes     = $event_data->args[0];
 
-		//Not testing versions since they are subject to change
-		$this->assertEquals( 'Twenty Seventeen', $themes['twentyseventeen']['name'] );
-		$this->assertEquals( 'https://wordpress.org/themes/twentyseventeen/', $themes['twentyseventeen']['uri'] );
-		$this->assertEquals( 'twentyseventeen', $themes['twentyseventeen']['stylesheet'] );
+		$this->assertSame( 'Child Sync Theme', $themes['theme-file-sync-child']['name'] );
+		$this->assertSame( 'https://jetpack.com/themes/sync-child/', $themes['theme-file-sync-child']['uri'] );
+		$this->assertSame( 'theme-file-sync-child', $themes['theme-file-sync-child']['stylesheet'] );
+		$this->assertSame( '1.0', $themes['theme-file-sync-child']['version'] );
 	}
 
 	public function test_widgets_changes_get_synced() {
 		global $wp_registered_sidebars;
-		global $wp_version;
 
 		$sidebar_id = 'sidebar-1';
 		$sidebar_name = $wp_registered_sidebars[ $sidebar_id ]['name'];
@@ -361,12 +407,7 @@ class WP_Test_Jetpack_Sync_Themes extends WP_Test_Jetpack_Sync_Base {
 
 		$this->assertEquals( $event->args[2], $sidebar_name, 'Added sidebar name not found' );
 
-		// WordPress 4.9 changed the label "Custom Menu" for "Navigation menu"
-		if ( version_compare( $wp_version, '4.9-alpha', '>=' ) ) {
-			$this->assertEquals( $event->args[3], 'Navigation Menu', 'Added widget name not found' );
-		} else {
-			$this->assertEquals( $event->args[3], 'Custom Menu', 'Added widget name not found' );
-		}
+		$this->assertEquals( $event->args[3], 'Navigation Menu', 'Added widget name not found' );
 
 		// Moved to inactive
 		$sidebar_widgets  = array(
