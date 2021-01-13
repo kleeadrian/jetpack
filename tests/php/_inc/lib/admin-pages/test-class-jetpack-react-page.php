@@ -47,23 +47,6 @@ class WP_Test_Jetpack_React_Page extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Tests the show_dev_packages_notice method with the following conditions:
-	 *    - Jetpack is a development version.
-	 *    - JETPACK_AUTOLOAD_DEV constant is set.
-	 *    - The autoloader's classmap does not match Jetpack's classmap file.
-	 *
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
-	 */
-	public function test_show_dev_packages_notice_autoload_dev_set() {
-		add_filter( 'jetpack_development_version', '__return_true' );
-		define( 'JETPACK_AUTOLOAD_DEV', true );
-		$this->change_autoloader_classmap();
-
-		$this->assertFalse( ( new Jetpack_React_Page() )->show_dev_packages_notice() );
-	}
-
-	/**
 	 * Changes the autoloader's in-memory classmap so that it doesn't match
 	 * Jetpack's classmap file.
 	 *
