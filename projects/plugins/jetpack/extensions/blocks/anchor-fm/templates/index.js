@@ -27,7 +27,7 @@ function spotifyTemplate( { spotifyShowUrl, spotifyImageUrl } ) {
 }
 
 function podcastSection( { episodeTrack } ) {
-	const { image, link } = episodeTrack;
+	const { image, link, guid } = episodeTrack;
 
 	return [
 		'core/columns',
@@ -57,6 +57,7 @@ function podcastSection( { episodeTrack } ) {
 							customPrimaryColor: getIconColor(),
 							hexPrimaryColor: getIconColor(),
 							url: link,
+							guidList: guid ? [ guid ] : [],
 						},
 					],
 				],
