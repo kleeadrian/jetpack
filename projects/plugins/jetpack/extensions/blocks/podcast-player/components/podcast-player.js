@@ -15,12 +15,7 @@ import { withDispatch, withSelect } from '@wordpress/data';
 /**
  * Internal dependencies
  */
-import {
-	STATE_PLAYING,
-	STATE_ERROR,
-	STATE_PAUSED,
-	STORE_ID,
-} from '../../../store/media-source/constants';
+import { STATE_ERROR, STATE_PAUSED, STORE_ID } from '../../../store/media-source/constants';
 import AudioPlayer from '../../../shared/components/audio-player';
 import Playlist from './playlist';
 import Header from './header';
