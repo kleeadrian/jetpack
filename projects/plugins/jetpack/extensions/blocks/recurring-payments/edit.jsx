@@ -30,7 +30,7 @@ import getJetpackExtensionAvailability from '../../shared/get-jetpack-extension-
 import { minimumTransactionAmountForCurrency } from '../../shared/currencies';
 import getSiteFragment from '../../shared/get-site-fragment';
 import { icon, isPriceValid, removeInvalidProducts, CURRENCY_OPTIONS } from '.';
-import { flashIcon } from '../../shared/icons';
+import { FlashIcon } from '../../shared/icons';
 
 const API_STATE_LOADING = 0;
 const API_STATE_CONNECTED = 1;
@@ -422,7 +422,7 @@ class MembershipsButtonEdit extends Component {
 					<BlockControls>
 						<ToolbarGroup>
 							<ToolbarButton
-								icon={ flashIcon }
+								icon={ FlashIcon }
 								onClick={ e => {
 									this.props.autosaveAndRedirect( e, connectURL );
 								} }
